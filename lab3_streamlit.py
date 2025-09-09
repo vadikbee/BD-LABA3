@@ -53,15 +53,23 @@ def load_trained_model():
         return None, None
 
 @st.cache_data
-def load_data_info(train_path):
+def load_data_info(train_path, valid_path):
+    """Загружает информацию о количестве классов и изображений."""
+    num_classes, num_train, num_valid = None, None, None
     try:
-        if not os.path.exists(train_path):
-            return None, None
-        num_classes = len([d for d in os.listdir(train_path) if os.path.isdir(os.path.join(train_path, d))])
-        num_train_images = sum([len(files) for r, d, files in os.walk(train_path)])
-        return num_classes, num_train_images
+        if os.path.exists(train_path):
+            # Считаем количество подпапок (классов)
+            num_classes = len([d for d in os.listdir(train_path) if os.path.isdir(os.path.join(train_path, d))])
+            # Считаем общее количество файлов
+            num_train = sum([len(files) for _, _, files in os.walk(train_path)])
+        
+        if os.path.exists(valid_path):
+            num_valid = sum([len(files) for _, _, files in os.walk(valid_path)])
+
+        return num_classes, num_train, num_valid
     except Exception:
-        return None, None
+        return None, None, None
+
 
 @st.cache_data
 def load_evaluation_results(file_path='evaluation_results.json'):
@@ -83,9 +91,27 @@ app_mode = st.sidebar.selectbox("Выберите раздел:", ["Обзор �
 
 if app_mode == "Обзор данных":
     st.header("1. Обзор данных")
-    num_classes, num_train_images = load_data_info('train_structured')
+
+    num_classes, num_train_images, num_valid_images = load_data_info('train_structured', 'valid_structured')
+    
+    st.subheader("Статистика по набору данных")
     if num_classes is not None:
-        st.metric("Количество классов (видов)", f"{num_classes} 🦋")
+        col1, col2, col3 = st.columns(3)
+        col1.metric("Количество классов (видов)", f"{num_classes} 🦋")
+        
+        if num_train_images is not None:
+            col2.metric("Обучающих изображений", f"{num_train_images} 🖼️")
+        
+        if num_valid_images is not None:
+            col3.metric("Валидационных изображений", f"{num_valid_images} 🖼️")
+        
+        total_images = (num_train_images or 0) + (num_valid_images or 0)
+        if total_images > 0:
+            st.info(f"**Всего в датасете:** {total_images} изображений. Все изображения приводятся к размеру **{width}x{height}** пикселей перед подачей в модель.")
+
+    else:
+        st.warning("Директории с данными ('train_structured'/'valid_structured') не найдены. Пожалуйста, запустите `prepare_data.py`.")
+
 
     st.divider()
     st.subheader("Результаты итоговой оценки модели")
