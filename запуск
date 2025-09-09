@@ -1,0 +1,12 @@
+1)python prepare_data.py
+
+Подготовьте данные. Ваш скрипт prepare_data.py должен отработать первым, чтобы создать папки train_structured и valid_structured. Запустите его:
+
+2)python train_butterfly.py
+Обучение модели 
+
+3)python convert_to_tflite.py
+Оптимизация модели 
+
+4)streamlit run lab3_streamlit.py
+Запуск веб-приложения
